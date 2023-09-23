@@ -1,0 +1,45 @@
+org: defibot
+app: defibot
+service: defibot
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+  environment:
+    MONGO_DB_KEY: ${env:MONGO_DB_TOASTER}
+    MONGO_DB_TEST: ${env:MONGO_DB_TEST}
+    TELEGRAM_BOT_KEY: ${env:TELEGRAM_BOT_TOKEN}
+
+functions:
+  webhook:
+    handler: index.webhook
+    timeout: 10
+    maximumRetryAttempts: 0
+    events:
+      - http:
+          path: webhook
+          method: post
+
+  rebalanceAlarm:
+    handler: index.rebalanceAlarm
+    maximumRetryAttempts: 0
+    events:
+      - schedule: rate(5 minutes)
+
+  updateInvests:
+    handler: index.updateInvests
+    maximumRetryAttempts: 0
+    events:
+      - schedule: rate(5 minutes)
+
+custom:
+  serverless-offline:
+    httpPort: 3000
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
