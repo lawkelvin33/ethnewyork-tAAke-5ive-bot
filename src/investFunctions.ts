@@ -6,7 +6,7 @@ export const investAlarm = async (
   bot: TelegramBot
 ) => {};
 
-export const updateInvests = async (
+export const investUpdate = async (
   mainDB: MongoClient,
   walletDB: MongoClient
 ) => {};

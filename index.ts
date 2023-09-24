@@ -5,8 +5,8 @@ import { Lambda } from "aws-sdk";
 import { isAddress } from "ethers";
 
 // commands
-import { investAlarm } from "./src/investFunctions";
-import { updateInvests } from "./src/investFunctions";
+import { investAlarm, investUpdate } from "./src/investFunctions";
+import { startCommand } from "./src/commands/start.command";
 
 // Telegram Bot
 const token = String(process.env.TELEGRAM_BOT_KEY);
@@ -16,7 +16,7 @@ let globalResolve: (value: any) => void = () => {};
 
 // DB Connection
 const mainDB = new MongoClient(String(process.env.MONGO_DB_KEY));
-const walletDB = new MongoClient(String(process.env.MONGO_DB_TEST));
+const alarmDB = new MongoClient(String(process.env.MONGO_DB_TEST));
 
 const lambda = new Lambda({
   apiVersion: "2015-03-31",
@@ -30,12 +30,12 @@ export const rebalanceAlarm = async () => {
   // 1. get alarm info from DB
   // 2. update position info of invests that have alarms
   // 3. send alarm to users
-  await investAlarm(walletDB, bot);
+  await investAlarm(alarmDB, bot);
 };
 
 export const updateInvests = async () => {
   // update investment information whose notification is set as true
-  await investUpdate(mainDB, walletDB);
+  await investUpdate(mainDB, alarmDB);
 };
 
 export const webhook = async (
@@ -71,17 +71,9 @@ export const webhook = async (
 };
 
 bot.onText(
-  /\/start/,
+  /\/start (.+)/,
   async (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
-    await startCommand(msg, bot);
-    globalResolve("ok");
-  }
-);
-
-bot.onText(
-  /\/echo (.+)/,
-  async (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
-    await echo(msg, match, bot);
+    await startCommand(msg, match![1], bot, alarmDB);
     globalResolve("ok");
   }
 );
