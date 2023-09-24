@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 export interface GetUniswapV3PositionsParams {
   chain: chainInterface;
   project: string;
@@ -51,4 +53,30 @@ export interface V3Position {
   timeElapsed: number;
   valueChange: number;
   chatId: number;
+}
+
+export interface investsInterface {
+  id: string;
+  chatId: number;
+  projectId: ObjectId;
+  subgraph: string;
+  createdAt: Date;
+  positionId: number;
+  ownerAddress: string;
+  poolAddress: string;
+  chainId: number;
+  project: string;
+  positionManager: string;
+  masterChef: string;
+  toaster: string;
+  initialValue: number;
+  notification: boolean;
+  lastUpdatedTime: Date;
+  inputTokens: string[]; // symbol
+  inputTokensAmount: number[];
+  inputTokensPrice: number[];
+  accumulatedFees: number[];
+  range: number[];
+  currentPrice: number;
+  currentAPR: number;
 }
