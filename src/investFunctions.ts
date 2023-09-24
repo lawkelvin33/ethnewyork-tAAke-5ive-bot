@@ -2,6 +2,7 @@ import { MongoClient } from "mongodb";
 import TelegramBot from "node-telegram-bot-api";
 import { syncBlockQuery } from "./thegraph/base.graph";
 import { investsInterface } from "./interface/interfaces.interface";
+import { investQuery, poolQuery } from "./thegraph/query.graph";
 
 export const investAlarm = async (alarmDB: MongoClient, bot: TelegramBot) => {};
 
@@ -53,7 +54,31 @@ export const investUpdate = async (alarmDB: MongoClient) => {
   });
 
   for (const c of investByChain) {
-    const _meta = syncBlockQuery(c[1][0].subgraph);
-    await Promise.all(c[1].map((i) => {}));
+    const _meta = await syncBlockQuery(c[1][0].subgraph);
+    const invests = await Promise.all(
+      c[1].flatMap((i) => [
+        investQuery(i.subgraph, _meta!.blockNumber, i.positionId),
+        poolQuery(i.subgraph, _meta!.blockNumber, i.poolAddress),
+      ])
+    );
+
+    const dbUpdate = [];
+
+    for (let i = 0; i < invests.length; i += 2) {
+      const update = alarmDB
+        .db("alarm")
+        .collection("invests")
+        .updateOne(
+          { id: c[1][i / 2].id },
+          {
+            $set: {
+              inputTokensAmount: [
+                invests[i].depositedToken0,
+                invests[i].depositedToken1,
+              ],
+            },
+          }
+        );
+    }
   }
 };
