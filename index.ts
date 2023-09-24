@@ -2,7 +2,6 @@ import TelegramBot from "node-telegram-bot-api";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { MongoClient } from "mongodb";
 import { Lambda } from "aws-sdk";
-import { isAddress } from "ethers";
 
 // commands
 import { investAlarm, investUpdate } from "./src/investFunctions";
@@ -35,7 +34,7 @@ export const rebalanceAlarm = async () => {
 
 export const updateInvests = async () => {
   // update investment information whose notification is set as true
-  await investUpdate(mainDB, alarmDB);
+  await investUpdate(alarmDB);
 };
 
 export const webhook = async (
