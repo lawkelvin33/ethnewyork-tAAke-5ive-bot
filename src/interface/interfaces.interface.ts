@@ -80,3 +80,20 @@ export interface investsInterface {
   currentPrice: number;
   currentAPR: number;
 }
+
+export interface positionInterface {
+  id: string;
+  owner: string;
+  tickLower: number;
+  tickUpper: number;
+  liquidity: number;
+  depositedToken0: number;
+  depositedToken1: number;
+  collectedFeesToken0: number;
+  collectedFeesToken1: number;
+}
+
+export interface poolInterface {
+  liquidity: number;
+  token0Price: number;
+}

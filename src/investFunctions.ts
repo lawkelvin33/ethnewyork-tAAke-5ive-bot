@@ -4,7 +4,45 @@ import { syncBlockQuery } from "./thegraph/base.graph";
 import { investsInterface } from "./interface/interfaces.interface";
 import { investQuery, poolQuery } from "./thegraph/query.graph";
 
-export const investAlarm = async (alarmDB: MongoClient, bot: TelegramBot) => {};
+export const investAlarm = async (alarmDB: MongoClient, bot: TelegramBot) => {
+  const invests = await alarmDB
+    .db("alarm")
+    .collection("invests")
+    .find({ notification: true })
+    .toArray();
+
+  const messages = [];
+
+  invests.forEach((i) => {
+    if (i.currentPrice < i.range[0] || i.currentPrice > i.range[1]) {
+      const currentValue =
+        i.inputTokensAmount[0] * i.inputTokensPrice[0] +
+        i.inputTokensAmount[1] * i.inputTokensPrice[1];
+      const feesValue =
+        i.accumulatedFees[0] * i.inputTokensPrice[0] +
+        i.accumulatedFees[1] * i.inputTokensPrice[1];
+      const totalValue = currentValue + feesValue;
+      const valueChange = 100 * (totalValue / i.initialValue - 1);
+      const message = `${valueChange > 0 ? "📈" : "📉"} Rebelancing Needed!${
+        i.inputTokens[0]
+      }+${i.inputTokens[1]}\n\nCurrent Value: ${totalValue} ( ${
+        valueChange > 0 ? "+" : "-"
+      }${valueChange}% )
+      \nfee: ${feesValue}
+      \nCurrent Price: $${i.currentPrice}
+      \nRange: [ ${i.range[0]} : ${i.range[1]} ]
+      \nCurrent APR: ${i.currentAPR}%
+      \n${(
+        +(i.lastUpdatedTime.getTime() - i.createdAt.getTime()) /
+        1000 /
+        60 /
+        60
+      ).toFixed(1)}
+      `;
+      return bot.sendMessage(i.chatId, message, { parse_mode: "HTML" });
+    }
+  });
+};
 
 export const investUpdate = async (alarmDB: MongoClient) => {
   const _invests = await alarmDB
@@ -65,6 +103,8 @@ export const investUpdate = async (alarmDB: MongoClient) => {
     const dbUpdate = [];
 
     for (let i = 0; i < invests.length; i += 2) {
+      const position = invests[i];
+      const pool = invests[i + 1];
       const update = alarmDB
         .db("alarm")
         .collection("invests")
@@ -73,12 +113,29 @@ export const investUpdate = async (alarmDB: MongoClient) => {
           {
             $set: {
               inputTokensAmount: [
-                invests[i].depositedToken0,
-                invests[i].depositedToken1,
+                //@ts-ignore
+                position.depositedToken0,
+                //@ts-ignore
+                position.depositedToken1,
               ],
+              accumulatedFees: [
+                //@ts-ignore
+                position.collectedFeesToken0,
+                //@ts-ignore
+                position.collectedFeesToken1,
+              ],
+              //@ts-ignore
+              currentPrice: pool.token0Price,
+              notification:
+                //@ts-ignore
+                position.depositedToken0 + position.depositedToken1 > 0
+                  ? true
+                  : false,
             },
           }
         );
+      dbUpdate.push(update);
     }
+    await Promise.all(dbUpdate);
   }
 };
