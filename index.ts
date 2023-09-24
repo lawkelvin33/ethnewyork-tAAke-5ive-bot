@@ -5,6 +5,8 @@ import { Lambda } from "aws-sdk";
 import { isAddress } from "ethers";
 
 // commands
+import { investAlarm } from "./src/investFunctions";
+import { updateInvests } from "./src/investFunctions";
 
 // Telegram Bot
 const token = String(process.env.TELEGRAM_BOT_KEY);
