@@ -11,4 +11,9 @@ export const startCommand = async (
     ownerAddress: address,
     chatId: msg.chat.id,
   });
+
+  await bot.sendMessage(
+    msg.chat.id,
+    `user ${address} registration is complete`
+  );
 };
